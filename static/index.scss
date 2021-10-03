@@ -1,0 +1,96 @@
+@mixin normalize{
+    color: white;
+    background-color: dodgerblue;
+    font-family: 'Roboto', 'sans-serif';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+@keyframes loading {
+    0%{
+        transform: rotate(45deg);
+    }
+    100%{
+        transform: rotate(405deg);
+    }
+}
+html{
+    height: 100%;
+}
+body{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 10% 80% 10%;
+    header{
+        @include normalize();
+    }
+    main{
+        position: relative;
+        display: flex;
+        justify-content: center;
+        .chat-container{
+           display: none;
+           flex-direction: column;
+           align-items: center;
+           width: 50%;
+           overflow-y: scroll;
+           .chat-form{
+                position: absolute;
+                bottom: 0;
+            }
+            .chat-window{
+                width: 90%;
+                .chat-list{
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    display: flex;
+                    flex-direction: column;
+                    .my-message{
+                        align-self: flex-end;
+                        border: 2px solid dodgerblue;
+                        border-radius: 15px;
+                        padding: 5px 10px;
+                        margin-right: 10px;
+                    }
+                    .other-user-message{
+                        align-self: flex-start;
+                        border: 2px solid red;
+                        border-radius: 15px;
+                        padding: 5px 10px;
+                        margin-left: 10px;
+                    }
+                    li{
+                        margin: 5px;
+                        max-width: 200px;
+                        word-wrap: normal;
+                    }
+                }
+            }
+        }
+        .no-other-user{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            .loader-outside{
+                animation-name: loading;
+                animation-duration: 2s;
+                animation-iteration-count: infinite;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                border-top: 3px solid transparent;
+                border-left: 3px solid dodgerblue;
+                border-right: 3px solid dodgerblue;
+                border-bottom: 3px solid dodgerblue;
+            }
+        }
+    }
+    footer{
+        @include normalize();
+    }
+}

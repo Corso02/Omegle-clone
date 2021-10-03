@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omegle - clone</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/index.css">
+    <script src="https://cdn.socket.io/4.2.0/socket.io.min.js" integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj" crossorigin="anonymous"></script>
+</head>
+<body>
+    <header>
+        <h1>Omegle - clone</h1>
+    </header>
+    <main>
+        <div class="chat-container">
+            <div class="chat-window">
+                <ul class="chat-list"></ul>
+            </div>
+            <div class="chat-form">
+                <input type="text" name="message" placeholder="Enter your message..." class="message-input">
+                <button class="send-message-btn">Send !</button>
+            </div>
+        </div>
+        <div class="no-other-user">
+            <div class="loader-outside">
+                <div class="loader-inside"></div>
+            </div>
+            <p>Waiting for other user. Please wait</p>
+        </div>
+    </main>
+    <footer>
+        <p>Created by Peter Vanát</p>
+    </footer>
+</body>
+    <script>
+        const socket = io()
+        let otherUserId = null
+        let messageContainer = document.getElementsByClassName("chat-list")[0]
+
+        const addMessage = (message, isFromOtherUser) => {
+            let newMessage = document.createElement("li")
+            newMessage.innerHTML = message
+            newMessage.setAttribute("class", isFromOtherUser ? "other-user-message" : "my-message")
+            messageContainer.appendChild(newMessage)
+        }
+
+
+        document.getElementsByClassName("send-message-btn")[0].addEventListener("click", () => {
+            let message = document.getElementsByClassName("message-input")[0].value
+            if(message.length > 0){
+                socket.emit("send message", {
+                    for: otherUserId,
+                    message
+                })
+                addMessage(message, false)
+                document.getElementsByClassName("message-input")[0].value = ""
+            }
+        })
+
+        
+
+        socket.on("get other user id", data => {
+            if(data.for === socket.id || data.otherUserId === socket.id){
+                otherUserId = data.for === socket.id ? data.otherUserId : data.for
+                document.getElementsByClassName("chat-container")[0].style.display = "flex"
+                document.getElementsByClassName("no-other-user")[0].style.display = "none"
+            }
+        })
+
+        socket.on("recieve message", data => {
+            if(data.for === socket.id){
+                addMessage(data.message, true)
+            }
+        })
+    </script>
+</html>

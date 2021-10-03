@@ -1,0 +1,26 @@
+{
+  "name": "omegle_clone",
+  "version": "1.0.0",
+  "description": "Omegle (chat app where you are paired with another random user) clone. Using node + express + sockets.",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Corso02/Omegle-clone.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Corso02/Omegle-clone/issues"
+  },
+  "homepage": "https://github.com/Corso02/Omegle-clone#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.13",
+    "socket.io": "^4.2.0"
+  }
+}
