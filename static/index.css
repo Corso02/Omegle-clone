@@ -72,6 +72,12 @@ body main .chat-container {
   overflow-y: scroll;
 }
 
+@media screen and (max-width: 420px) {
+  body main .chat-container {
+    width: 100%;
+  }
+}
+
 body main .chat-container .chat-form {
   position: absolute;
   bottom: 0;

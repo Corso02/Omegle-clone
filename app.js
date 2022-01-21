@@ -25,6 +25,10 @@ io.on("connection", socket => {
             for: socket.id,
             otherUserId 
         })
+        io.emit("get other user id", {
+            for: otherUserId,
+            otherUserId: socket.id 
+        })
         //remove sended ID from available users
         let otherUserIdx = availableUsers.indexOf(otherUserId)
         availableUsers = availableUsers.filter((id, idx) => {
