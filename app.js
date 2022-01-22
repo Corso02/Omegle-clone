@@ -14,8 +14,8 @@ const app = express()
 
 app.use(loggerMiddleware)
 
-let server = app.listen(Number(process.env.DEV_PORT) || process.env.PORT ,() => {
-    console.log(`Listening on port ${process.env.DEV_PORT}`)
+let server = app.listen(process.env.PORT || 5000 ,() => {
+    console.log(`Listening on port ${process.env.PORT || 5000}`)
  })
 
 const io = require("socket.io")(server)
