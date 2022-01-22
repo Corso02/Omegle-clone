@@ -22,7 +22,7 @@ body{
     padding: 0;
     height: 100%;
     display: grid;
-    grid-template-rows: 10% 80% 10%;
+    grid-template-rows: 10% 85% 5%;
     header{
         @include normalize();
     }
@@ -42,6 +42,19 @@ body{
            .chat-form{
                 position: absolute;
                 bottom: 0;
+                width: 30%;
+                @media screen and (max-width: 420px) {
+                    width: 100%;
+                }
+                margin: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                input{
+                   width: 80%;
+                   margin-right: 5px;
+                   height: 25px;
+                }
             }
             .chat-window{
                 width: 90%;
@@ -51,6 +64,7 @@ body{
                     margin: 0;
                     display: flex;
                     flex-direction: column;
+                    margin-bottom: 25px;
                     .my-message{
                         align-self: flex-end;
                         border: 2px solid dodgerblue;

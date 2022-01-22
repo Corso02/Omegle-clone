@@ -31,7 +31,7 @@
             <div class="loader-outside">
                 <div class="loader-inside"></div>
             </div>
-            <p>Waiting for other user. Please wait</p>
+            <p id="waiting_message">Waiting for other user. Please wait</p>
         </div>
     </main>
     <footer>
@@ -48,6 +48,11 @@
             newMessage.innerHTML = message
             newMessage.setAttribute("class", isFromOtherUser ? "other-user-message" : "my-message")
             messageContainer.appendChild(newMessage)
+            if(messageContainer.clientHeight >= (window.innerHeight / 100) * 80){
+                let container = document.getElementsByClassName("chat-container")[0]
+                container.scrollTop = container.scrollHeight - container.clientHeight
+            }
+                
         }
 
 
@@ -67,15 +72,36 @@
 
         socket.on("get other user id", data => {
             if(data.for === socket.id || data.otherUserId === socket.id){
+                console.log("connected")
                 otherUserId = data.for === socket.id ? data.otherUserId : data.for
                 document.getElementsByClassName("chat-container")[0].style.display = "flex"
                 document.getElementsByClassName("no-other-user")[0].style.display = "none"
+                document.getElementsByClassName("message-input")[0].addEventListener("keyup", event => {
+                    if(event.keyCode === 13){
+                        //event.preventDefault()
+                        document.getElementsByClassName("send-message-btn")[0].click()
+                    }
+                })
+                document.getElementsByClassName("message-input")[0].addEventListener("focus", () => {
+                    let container = document.getElementsByClassName("chat-container")[0]
+                    container.scrollTop = container.scrollHeight - container.clientHeight
+                })
             }
         })
 
         socket.on("recieve message", data => {
             if(data.for === socket.id){
                 addMessage(data.message, true)
+            }
+        })
+
+        socket.on("other user disconnected", data => {
+            if(data.for === socket.id){
+                console.log("disconnect")
+                document.getElementsByClassName("chat-container")[0].style.display = "none"
+                document.getElementsByClassName("no-other-user")[0].style.display = "flex"
+                document.getElementById("waiting_message").innerHTML = "Other user has disconnected, waiting for another user"
+                document.getElementsByTagName("ul")[0].innerHTML = ""
             }
         })
     </script>

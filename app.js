@@ -3,10 +3,18 @@ require("dotenv").config()
 const express = require("express")
 const path = require("path")
 const { randomFromTo } = require("./utils/random")
+const expressPinoLogger = require("express-pino-logger")
+const logger = require("./logger/logger")
+
+const loggerMiddleware = expressPinoLogger({
+    logger,
+})
 
 const app = express()
 
-let server = app.listen(Number(process.env.DEV_PORT) ,() => {
+app.use(loggerMiddleware)
+
+let server = app.listen(Number(process.env.DEV_PORT) || process.env.PORT ,() => {
     console.log(`Listening on port ${process.env.DEV_PORT}`)
  })
 
@@ -14,28 +22,46 @@ const io = require("socket.io")(server)
 
 let connectedUsers = [] // holds IDs of all connected users
 let availableUsers = [] // holds IDs of all available users
+let pairedUsers = {
+    pairs: []
+}
+
+const connectTwoUsers = (socketId) => {
+    let otherUserId = availableUsers[randomFromTo(availableUsers.length)]
+    while(!otherUserId){
+        console.log("pickign again")
+        otherUserId = availableUsers[randomFromTo(availableUsers.length)]
+    }
+    console.log("other user id picked: ",otherUserId)
+    io.emit("get other user id", {
+        for: socketId,
+        otherUserId 
+    })
+    io.emit("get other user id", {
+        for: otherUserId,
+        otherUserId: socketId 
+    })
+    let newPair = {
+        user1Id: socketId,
+        user2Id: otherUserId
+    }
+    pairedUsers.pairs.push(newPair)
+    //remove sended ID from available users
+    let otherUserIdx = availableUsers.indexOf(otherUserId)
+    availableUsers = availableUsers.filter((id, idx) => {
+        if(idx !== otherUserIdx){
+            return id
+        }
+    })
+    logger.info("Users paired")
+}
 
 io.on("connection", socket => {
+    logger.info("New socket connection established")
     connectedUsers.push(socket.id) // add socket id to connectedUsers
 
     if(availableUsers.length > 0){
-        // if there is/are user/s waiting send one of their ID to the new user
-        let otherUserId = availableUsers[randomFromTo(availableUsers.length)]
-        io.emit("get other user id", {
-            for: socket.id,
-            otherUserId 
-        })
-        io.emit("get other user id", {
-            for: otherUserId,
-            otherUserId: socket.id 
-        })
-        //remove sended ID from available users
-        let otherUserIdx = availableUsers.indexOf(otherUserId)
-        availableUsers = availableUsers.filter((id, idx) => {
-            if(idx !== otherUserIdx){
-                return id
-            }
-        })
+        connectTwoUsers(socket.id)
     }
     // if there is not any available user add new user to this array
     else{
@@ -52,6 +78,7 @@ io.on("connection", socket => {
     })
 
     socket.on("disconnect", () => {
+        logger.info("User disconnected")
         connectedUsers = connectedUsers.filter(id => {
             if(socket.id !== id){
                 return id
@@ -64,6 +91,29 @@ io.on("connection", socket => {
                 }
             })
         }
+        else{
+            pairedUsers.pairs.map((pair, pairIdx) => {
+                if(pair.user1Id === socket.id || pair.user2Id === socket.id){
+                    console.log("ale no ")
+                    let otherUserId = ""
+                    if(pair.user1Id === socket.id)
+                        otherUserId = pair.user2Id
+                    else
+                        otherUserId = pair.user1Id
+                    io.emit("other user disconnected", {
+                        for: otherUserId,
+                        u1: pair.user1Id,
+                        u2: pair.user2Id
+                    })
+                    if(availableUsers.length > 0){
+                        connectTwoUsers(otherUserId)
+                    }
+                    else
+                        availableUsers.push(otherUserId)
+                    pairedUsers.pairs.splice(pairIdx, 1)
+                }
+            })
+        }
     })
 })
 
@@ -73,3 +123,15 @@ app.get("/", (req, res) => {
     res.status(200).sendFile(path.resolve("./", "views", "index.html"))
 })
 
+app.get("/users", (req, res) => {
+    let responseJSON = {
+        availableUsers,
+        connectedUsers,
+        pairedUsers
+    }
+    res.status(200).type("application/json").send(JSON.stringify(responseJSON))
+})
+
+app.get("/xd", (req, res) => {
+   res.status(200).sendFile(path.resolve("./", "views", "sv_slovo.html"))
+})

@@ -30,8 +30,8 @@ body {
   height: 100%;
   display: -ms-grid;
   display: grid;
-  -ms-grid-rows: 10% 80% 10%;
-      grid-template-rows: 10% 80% 10%;
+  -ms-grid-rows: 10% 85% 5%;
+      grid-template-rows: 10% 85% 5%;
 }
 
 body header {
@@ -81,6 +81,29 @@ body main .chat-container {
 body main .chat-container .chat-form {
   position: absolute;
   bottom: 0;
+  width: 30%;
+  margin: 5px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+
+@media screen and (max-width: 420px) {
+  body main .chat-container .chat-form {
+    width: 100%;
+  }
+}
+
+body main .chat-container .chat-form input {
+  width: 80%;
+  margin-right: 5px;
+  height: 25px;
 }
 
 body main .chat-container .chat-window {
@@ -98,6 +121,7 @@ body main .chat-container .chat-window .chat-list {
   -webkit-box-direction: normal;
       -ms-flex-direction: column;
           flex-direction: column;
+  margin-bottom: 25px;
 }
 
 body main .chat-container .chat-window .chat-list .my-message {
