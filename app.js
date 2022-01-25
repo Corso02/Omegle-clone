@@ -160,7 +160,6 @@ io.on("connection", socket => {
         groups.push(newGroup)
         pairedUsers.pairs.map((pair, pairIdx) => {
             if(pair.user1Id === socket.id || pair.user2Id === socket.id){
-                isUserPaired = true
                 console.log("ale no ")
                 let otherUserId = ""
                 if(pair.user1Id === socket.id)
@@ -172,6 +171,11 @@ io.on("connection", socket => {
                     u1: pair.user1Id,
                     u2: pair.user2Id
                 })
+                if(availableUsers.length > 0){
+                    connectTwoUsers(otherUserId)
+                }
+                else
+                    availableUsers.push(otherUserId)
                 pairedUsers.pairs.splice(pairIdx, 1)
             }
         })
@@ -196,7 +200,6 @@ io.on("connection", socket => {
             })
             pairedUsers.pairs.map((pair, pairIdx) => {
                 if(pair.user1Id === socket.id || pair.user2Id === socket.id){
-                    isUserPaired = true
                     console.log("ale no ")
                     let otherUserId = ""
                     if(pair.user1Id === socket.id)
@@ -208,6 +211,11 @@ io.on("connection", socket => {
                         u1: pair.user1Id,
                         u2: pair.user2Id
                     })
+                    if(availableUsers.length > 0){
+                        connectTwoUsers(otherUserId)
+                    }
+                    else
+                        availableUsers.push(otherUserId)
                     pairedUsers.pairs.splice(pairIdx, 1)
                 }
             })
