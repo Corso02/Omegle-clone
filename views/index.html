@@ -162,7 +162,7 @@
                         })
                     }
                 }
-                else{
+                else if(createGroup === "Create group"){
                     socket.emit("Create group", {
                         owner: socket.id
                     })

@@ -158,6 +158,23 @@ io.on("connection", socket => {
             users: [data.owner]
         }
         groups.push(newGroup)
+        pairedUsers.pairs.map((pair, pairIdx) => {
+            if(pair.user1Id === socket.id || pair.user2Id === socket.id){
+                isUserPaired = true
+                console.log("ale no ")
+                let otherUserId = ""
+                if(pair.user1Id === socket.id)
+                    otherUserId = pair.user2Id
+                else
+                    otherUserId = pair.user1Id
+                io.emit("other user disconnected", {
+                    for: otherUserId,
+                    u1: pair.user1Id,
+                    u2: pair.user2Id
+                })
+                pairedUsers.pairs.splice(pairIdx, 1)
+            }
+        })
     })
 
     socket.on("Join group", data => {
@@ -176,6 +193,23 @@ io.on("connection", socket => {
                 for: data.for,
                 success: true,
                 groupId: data.groupId
+            })
+            pairedUsers.pairs.map((pair, pairIdx) => {
+                if(pair.user1Id === socket.id || pair.user2Id === socket.id){
+                    isUserPaired = true
+                    console.log("ale no ")
+                    let otherUserId = ""
+                    if(pair.user1Id === socket.id)
+                        otherUserId = pair.user2Id
+                    else
+                        otherUserId = pair.user1Id
+                    io.emit("other user disconnected", {
+                        for: otherUserId,
+                        u1: pair.user1Id,
+                        u2: pair.user2Id
+                    })
+                    pairedUsers.pairs.splice(pairIdx, 1)
+                }
             })
         }
         else{
