@@ -2,7 +2,7 @@ require("dotenv").config()
 
 const express = require("express")
 const path = require("path")
-const { randomFromTo } = require("./utils/random")
+const { randomFromTo, randomString } = require("./utils/random")
 const expressPinoLogger = require("express-pino-logger")
 const logger = require("./logger/logger")
 
@@ -14,7 +14,7 @@ const app = express()
 
 app.use(loggerMiddleware)
 
-let server = app.listen(process.env.PORT || 5000 ,() => {
+let server = app.listen(process.env.PORT || Number(process.env.DEV_PORT) ,() => {
     console.log(`Listening on port ${process.env.PORT || 5000}`)
  })
 
@@ -22,6 +22,8 @@ const io = require("socket.io")(server)
 
 let connectedUsers = [] // holds IDs of all connected users
 let availableUsers = [] // holds IDs of all available users
+let numOfConnectedUsers = 0
+let groups = []
 let pairedUsers = {
     pairs: []
 }
@@ -57,8 +59,17 @@ const connectTwoUsers = (socketId) => {
 }
 
 io.on("connection", socket => {
+    if(socket.handshake.headers.referer.includes("group")){
+        return
+    }
     logger.info("New socket connection established")
     connectedUsers.push(socket.id) // add socket id to connectedUsers
+    numOfConnectedUsers++
+
+    /* io.emit("get number of users", {
+        for: socket.id,
+        numOfConnectedUsers
+    }) */
 
     if(availableUsers.length > 0){
         connectTwoUsers(socket.id)
@@ -79,6 +90,7 @@ io.on("connection", socket => {
 
     socket.on("disconnect", () => {
         logger.info("User disconnected")
+        numOfConnectedUsers--
         connectedUsers = connectedUsers.filter(id => {
             if(socket.id !== id){
                 return id
@@ -92,8 +104,10 @@ io.on("connection", socket => {
             })
         }
         else{
+            let isUserPaired = false
             pairedUsers.pairs.map((pair, pairIdx) => {
                 if(pair.user1Id === socket.id || pair.user2Id === socket.id){
+                    isUserPaired = true
                     console.log("ale no ")
                     let otherUserId = ""
                     if(pair.user1Id === socket.id)
@@ -113,8 +127,73 @@ io.on("connection", socket => {
                     pairedUsers.pairs.splice(pairIdx, 1)
                 }
             })
+            if(!isUserPaired){
+                let deleteGroup = false
+                let deleteGroupIdx = 0
+                groups.map((group, groupIdx) => {
+                    if(group.users.includes(socket.id)){
+                        group.users.splice(group.users.indexOf(socket.id), 1)
+                        if(group.users.length === 0){
+                            deleteGroup = true
+                            deleteGroupIdx = groupIdx
+                        }
+                    }
+                })
+                if(deleteGroup){
+                    groups.splice(deleteGroupIdx, 1)
+                }
+            }
         }
     })
+
+    socket.on("Create group", data => {
+        let newGroupId = randomString(12)
+        io.emit("Admin group id", {
+            for: data.owner,
+            groupId: newGroupId
+        })
+        availableUsers.splice(availableUsers.indexOf(socket.id), 1)
+        let newGroup = {
+            id: newGroupId,
+            users: [data.owner]
+        }
+        groups.push(newGroup)
+    })
+
+    socket.on("Join group", data => {
+        let groupExists = false
+        let groupId = 0
+        groups.map((group, groupIdx) => {
+            if(group.id === data.groupId){
+                groupExists = true
+                groupId = groupIdx
+            }
+        })
+        if(groupExists){
+            availableUsers.splice(availableUsers.indexOf(socket.id), 1)
+            groups[groupId].users.push(socket.id)
+            io.emit("Join group resolve", {
+                for: data.for,
+                success: true,
+                groupId: data.groupId
+            })
+        }
+        else{
+            io.emit("Join group resolve", {
+                for: data.for,
+                success: false
+            })
+        }
+    })
+
+    socket.on("group message", data => {
+        io.emit("recieve group message", {
+            groupId: data.groupId,
+            message: data.message,
+            from: data.from
+        })
+    })
+
 })
 
 app.use(express.static(path.resolve("./", "static")))
@@ -127,11 +206,16 @@ app.get("/users", (req, res) => {
     let responseJSON = {
         availableUsers,
         connectedUsers,
-        pairedUsers
+        pairedUsers,
+        groups
     }
     res.status(200).type("application/json").send(JSON.stringify(responseJSON))
 })
 
 app.get("/xd", (req, res) => {
    res.status(200).sendFile(path.resolve("./", "views", "sv_slovo.html"))
+})
+
+app.get("/group", (req, res) => {
+    res.status(200).sendFile(path.resolve("./", "views", "group.html"))
 })

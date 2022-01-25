@@ -10,14 +10,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/style/index/index.css">
     <script src="https://cdn.socket.io/4.2.0/socket.io.min.js" integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj" crossorigin="anonymous"></script>
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 <body>
     <header>
+        <img src="/imgs/group_2.png" alt="Group icon" id="group_icon">
         <h1>Omegle - clone</h1>
     </header>
     <main>
+        <div class="group-id-wrapper">
+            <p class="group-id"></p>
+        </div>
         <div class="chat-container">
             <div class="chat-window">
                 <ul class="chat-list"></ul>
@@ -42,6 +48,7 @@
         const socket = io()
         let otherUserId = null
         let messageContainer = document.getElementsByClassName("chat-list")[0]
+        let groupId = ""
 
         const addMessage = (message, isFromOtherUser) => {
             let newMessage = document.createElement("li")
@@ -51,18 +58,40 @@
             if(messageContainer.clientHeight >= (window.innerHeight / 100) * 80){
                 let container = document.getElementsByClassName("chat-container")[0]
                 container.scrollTop = container.scrollHeight - container.clientHeight
-            }
-                
+            }                
         }
 
+        const startChatting = () => {
+            document.getElementsByClassName("chat-container")[0].style.display = "flex"
+            document.getElementsByClassName("no-other-user")[0].style.display = "none"
+            document.getElementsByClassName("message-input")[0].addEventListener("keyup", event => {
+                if(event.keyCode === 13){
+                    document.getElementsByClassName("send-message-btn")[0].click()
+                }
+            })
+            document.getElementsByClassName("message-input")[0].addEventListener("focus", () => {
+                let container = document.getElementsByClassName("chat-container")[0]
+                container.scrollTop = container.scrollHeight - container.clientHeight
+            })
+        }
 
+        // send message
         document.getElementsByClassName("send-message-btn")[0].addEventListener("click", () => {
             let message = document.getElementsByClassName("message-input")[0].value
             if(message.length > 0){
-                socket.emit("send message", {
-                    for: otherUserId,
-                    message
-                })
+                if(groupId === ""){
+                    socket.emit("send message", {
+                        for: otherUserId,
+                        message
+                    })
+                }
+                else{
+                    socket.emit("group message", {
+                        groupId,
+                        message,
+                        from: socket.id
+                    })
+                }
                 addMessage(message, false)
                 document.getElementsByClassName("message-input")[0].value = ""
             }
@@ -74,18 +103,7 @@
             if(data.for === socket.id || data.otherUserId === socket.id){
                 console.log("connected")
                 otherUserId = data.for === socket.id ? data.otherUserId : data.for
-                document.getElementsByClassName("chat-container")[0].style.display = "flex"
-                document.getElementsByClassName("no-other-user")[0].style.display = "none"
-                document.getElementsByClassName("message-input")[0].addEventListener("keyup", event => {
-                    if(event.keyCode === 13){
-                        //event.preventDefault()
-                        document.getElementsByClassName("send-message-btn")[0].click()
-                    }
-                })
-                document.getElementsByClassName("message-input")[0].addEventListener("focus", () => {
-                    let container = document.getElementsByClassName("chat-container")[0]
-                    container.scrollTop = container.scrollHeight - container.clientHeight
-                })
+                startChatting()
             }
         })
 
@@ -104,5 +122,92 @@
                 document.getElementsByTagName("ul")[0].innerHTML = ""
             }
         })
+
+        document.getElementById("group_icon").addEventListener("click", async (event) => {
+            if(groupId === ""){
+                const {value: createGroup} = await Swal.fire({
+                    title: "Choose action",
+                    input: "radio",
+                    inputOptions: {
+                        "Create group": "Create group",
+                        "Join group": "Join group"
+                    },
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to choose something!'
+                        }
+                    },
+                    heightAuto: false,
+                    showCancelButton: true
+
+                })
+                if(createGroup === "Join group"){
+                    const {value: groupIdInput } = await Swal.fire({
+                        title: 'Enter group ID',
+                        input: 'text',
+                        inputLabel: 'Your group ID',
+                        showCancelButton: true,
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'You need to write something!'
+                            }
+                        },
+                        heightAuto: false,
+                    })
+                    if(groupIdInput){
+                        groupId = groupIdInput
+                        socket.emit("Join group", {
+                            groupId: groupIdInput,
+                            for: socket.id
+                        })
+                    }
+                }
+                else{
+                    socket.emit("Create group", {
+                        owner: socket.id
+                    })
+                }
+            }
+            else{
+                Swal.fire({
+                    title: "Your group ID",
+                    icon: "info",
+                    heightAuto: false,
+                    text: `${groupId}`
+                })
+            }
+        })
+        
+        socket.on("Admin group id", data => {
+            if(data.for === socket.id){
+                groupId = data.groupId
+                startChatting()
+            }
+        })
+
+        socket.on("Join group resolve", data => {
+            if(data.for === socket.id){
+                if(data.success){
+                    startChatting()
+                }
+                else{
+                    groupId = ""
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Wrong group ID entered',
+                        icon: 'error',
+                        heightAuto: false
+                    })
+                }
+            }
+        })
+
+        socket.on("recieve group message", data => {
+            if(data.groupId === groupId){
+                if(data.from !== socket.id)
+                    addMessage(data.message, true)
+            }
+        })
+
     </script>
 </html>

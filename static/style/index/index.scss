@@ -1,19 +1,5 @@
-@mixin normalize{
-    color: white;
-    background-color: dodgerblue;
-    font-family: 'Roboto', 'sans-serif';
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-@keyframes loading {
-    0%{
-        transform: rotate(45deg);
-    }
-    100%{
-        transform: rotate(405deg);
-    }
-}
+@use "../mixins";
+@use "../anims";
 html{
     height: 100%;
 }
@@ -24,12 +10,30 @@ body{
     display: grid;
     grid-template-rows: 10% 85% 5%;
     header{
-        @include normalize();
+        @include mixins.normalize();
+        img{
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            right: 0;
+            margin-right: 15px;
+            &:hover{
+                cursor: pointer;
+            }
+        }
     }
     main{
         position: relative;
         display: flex;
         justify-content: center;
+        .group-id-wrapper{
+            display: none;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 10px;
+        }
         .chat-container{
            display: none;
            flex-direction: column;
@@ -108,6 +112,6 @@ body{
         }
     }
     footer{
-        @include normalize();
+        @include mixins.normalize();
     }
 }
